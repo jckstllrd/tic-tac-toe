@@ -1,0 +1,16 @@
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+h1 {
+  margin: 0;
+}
+
+.container {
+  width: 50%;
+  margin-inline: auto;
+  display: flex;
+  justify-content: center;
+}
