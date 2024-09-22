@@ -1,13 +1,39 @@
 const gameController = (function () {
-  let winState = false;
-  let drawState = false;
+  let isWin = false;
+  let isDraw = false;
+  let players = [];
+  let currentPlayer;
 
-  const initiatePlayer = () => {
-    d;
-    const playerName = prompt("Player Name:");
-    const playerMarker = prompt("Player Marker:");
-    const player = createPlayer(playerName, playerMarker);
-    return player;
+  const getWin = () => {
+    return isWin;
+  };
+  const getDraw = () => {
+    return isDraw;
+  };
+
+  /* 
+    Game Flow:
+    - Page loads, grid is visible with a start button above the board.
+    - When clicking the button, a dialog box opens asking the player's name
+      and what marker they want, it then picks at random whose turn it is.
+    - The page waits for one of the cells to be pick
+    - When a cell is picked, the gameController calls a function that takes
+      the marker and cell index and adds the marker to both the cell and the
+      internal gameboard
+    - A check is done against the internal gameboard to see if it ends the game
+    - If not, then it's the other person's go
+    - For computer's turn, random index picked that is available and this then 
+      translates to a cell on the screen
+    */
+
+  const initialiseBoard = () => {
+    const grid = document.querySelectorAll(".cell");
+
+    grid.forEach((cell) => {
+      cell.addEventListener("click", (e) => {
+        console.log(e.target.classList);
+      });
+    });
   };
 
   const initiateComputer = (playerMarker) => {
@@ -22,72 +48,75 @@ const gameController = (function () {
     return computer;
   };
 
-  const initiateBoard = () => {
-    const grid = document.querySelectorAll(".cell");
+  const openMenu = () => {
+    let playerName;
+    let playerMarker;
+    const dialog = document.querySelector("dialog");
+    const closeBtn = document.querySelector(".close");
 
-    grid.forEach((cell) => {
-      cell.addEventListener("click", (e) => {
-        console.log(e.target.classList);
-      });
+    closeBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      dialog.close();
     });
+
+    const submitBtn = document.querySelector("#submit");
+
+    submitBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      playerName = document.querySelector('[name="player-name"]').value;
+      playerMarker = document.querySelector(
+        '[name="player-marker"]:checked'
+      ).value;
+      console.log("clicked and added player " + playerName);
+
+      const player = createPlayer(playerName, playerMarker);
+      const computer = initiateComputer(player.getMarker());
+      console.log("Created player with name " + player.name);
+
+      players.push(player);
+      players.push(computer);
+
+      dialog.close();
+      playGame();
+    });
+
+    dialog.showModal();
   };
 
-  const winOrDraw = () => {
-    [winState, drawState] = gameboard.boardStateCheck();
-    if (winState) {
-      console.log("We have a winner");
-    } else if (drawState) {
-      console.log("We have a draw");
+  const pickTurn = () => {
+    let playerIndex = Math.floor(Math.random() * 2);
+    currentPlayer = players[playerIndex];
+    console.log(currentPlayer.name);
+  };
+
+  //   const takeTurn = (player) => {
+  //     if
+  //   }
+
+  const playRound = () => {
+    const body = document.querySelector("body");
+    const currentTurnText = document.createElement("div");
+    currentTurnText.textContent = "Current turn: " + currentPlayer.name;
+    body.appendChild(currentTurnText);
+
+    while (!isWin && !isDraw) {
+      taketurn(currentPlayer);
+      checkGameState();
+      toggleTurn();
     }
   };
 
   const playGame = () => {
-    const player1 = initiatePlayer();
-    const computer = initiateComputer(player1.getMarker());
-    computer.updateTurn(false);
-    gameboard.displayBoard();
-    while (!winState && !drawState) {
-      console.log(player1.getTurn());
+    //Asks player for Name and marker in a dialog box
+    initialiseBoard();
 
-      console.log("here 1");
-      if (player1.getTurn()) {
-        console.log("Player turn");
+    // Choose a player randomly to take turn first
+    pickTurn();
 
-        console.log("here 2");
-        let playerSelectionRow = prompt("Pick a row 1-3:");
-        let playerSelectionCol = prompt("Pick a column 1-3:");
-        gameboard.updateBoard(
-          player1.getMarker(),
-          playerSelectionRow,
-          playerSelectionCol
-        );
-        player1.updateTurn(false);
-        computer.updateTurn(true);
-        winOrDraw();
-        if (winState || drawState) {
-          break;
-        }
-      } else if (computer.getTurn()) {
-        console.log("computer turn");
-
-        let computerSelection = "";
-        let selectRow;
-        let selectCol;
-        while (computerSelection != "_") {
-          selectRow = Math.floor(Math.random() * 3 + 1);
-          selectCol = Math.floor(Math.random() * 3 + 1);
-          console.log(selectRow, selectCol);
-
-          computerSelection = gameboard.checkCell(selectRow, selectCol);
-        }
-        gameboard.updateBoard(computer.getMarker(), selectRow, selectCol);
-        computer.updateTurn(false);
-        player1.updateTurn(true);
-        winOrDraw();
-      }
-    }
+    playRound();
   };
-  return { playGame };
+
+  return { openMenu, playGame, getWin, getDraw };
 })();
 
 const gameboard = (function () {
@@ -211,19 +240,15 @@ const gameboard = (function () {
 
 function createPlayer(name, marker) {
   const score = 0;
-  let isTurn = true;
-  const getName = () => name;
   const getMarker = () => marker;
   const getScore = () => score;
-  const getTurn = () => isTurn;
-  const updateTurn = (turn) => (isTurn = turn);
   const increaseScore = () => score++;
 
-  return { getName, getMarker, getScore, increaseScore, getTurn, updateTurn };
+  return { name, getMarker, getScore, increaseScore };
 }
 
 const button = document.querySelector(".start-game");
 button.addEventListener("click", (e) => {
   e.preventDefault();
-  gameController.playGame();
+  gameController.openMenu();
 });

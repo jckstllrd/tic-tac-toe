@@ -5,21 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tic Tac Toe</title>
     <link rel="stylesheet" href="css/style.css" />
-    <script src="index.js" defer></script>
+    <script src="index2.js" defer></script>
   </head>
   <body>
     <h1>Tic Tac Toe</h1>
     <button class="start-game">Start Game</button>
+    <dialog class="player-menu">
+      <form method="POST">
+        <label for="player-name">Player Name:</label
+        ><input type="text" id="player-name" name="player-name" />
+        <label for="X">X: </label
+        ><input type="radio" id="X" name="player-marker" /><label for="O"
+          >O: </label
+        ><input type="radio" id="O" name="player-marker" />
+        <input type="submit" value="Submit" id="submit" />
+      </form>
+      <button class="close">Close</button>
+    </dialog>
     <div class="container">
-      <div class="cell 0"></div>
-      <div class="cell 1"></div>
-      <div class="cell 2"></div>
-      <div class="cell 3"></div>
-      <div class="cell 4"></div>
-      <div class="cell 5"></div>
-      <div class="cell 6"></div>
-      <div class="cell 7"></div>
-      <div class="cell 8"></div>
+      <div class="cell 0-0"></div>
+      <div class="cell 0-1"></div>
+      <div class="cell 0-2"></div>
+      <div class="cell 1-0"></div>
+      <div class="cell 1-1"></div>
+      <div class="cell 1-2"></div>
+      <div class="cell 2-0"></div>
+      <div class="cell 2-1"></div>
+      <div class="cell 2-2"></div>
     </div>
   </body>
 </html>
