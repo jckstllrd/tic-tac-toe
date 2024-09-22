@@ -214,3 +214,11 @@ const button = document.querySelector(".start-game");
 button.addEventListener("click", () => {
   gameController.playGame();
 });
+
+const grid = document.querySelectorAll(".cell");
+
+grid.forEach((cell) => {
+  cell.addEventListener("click", (e) => {
+    console.log(e.target.classList);
+  });
+});
