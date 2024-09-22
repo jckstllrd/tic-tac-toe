@@ -210,4 +210,7 @@ function createPlayer(name, marker) {
   return { name, getMarker, getScore, increaseScore, getTurn, updateTurn };
 }
 
-gameController.playGame();
+const button = document.querySelector(".start-game");
+button.addEventListener("click", () => {
+  gameController.playGame();
+});
