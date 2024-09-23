@@ -89,9 +89,46 @@ const gameController = (function () {
     console.log(currentPlayer.name);
   };
 
-  //   const takeTurn = (player) => {
-  //     if
+  const displayMarker = (marker, row, col) => {
+    let cellClass = "" + row + "-" + col;
+    const cell = document.querySelector(cellClass);
+    const divMarker = document.createElement(div);
+
+    divMarker.textContent = marker;
+    divMarker.style.fontSize = 32;
+
+    cell.appendChild(divMarker);
+  };
+
+  //   const takePlayerTurn() {
+
   //   }
+
+  const takeTurn = (player) => {
+    if (player.name == "Computer") {
+      let compSelect = "";
+      let selectRow;
+      let selectCol;
+      while (computerSelection != "_") {
+        selectRow = Math.floor(Math.random() * 3);
+        selectCol = Math.floor(Math.random() * 3);
+
+        compSelect = gameboard.checkCell(selectRow, selectCol);
+      }
+      gameboard.updateBoard(computer.getMarker, selectRow, selectCol);
+      displayMarker(computer.getMarker, selectRow, selectCol);
+    } else {
+      return takePlayerTurn(player);
+    }
+  };
+
+  const toggleTurn = () => {
+    if (currentPlayer == players[0]) {
+      currentPlayer = players[1];
+    } else {
+      currentPlayer = players[0];
+    }
+  };
 
   const playRound = () => {
     const body = document.querySelector("body");
@@ -100,7 +137,7 @@ const gameController = (function () {
     body.appendChild(currentTurnText);
 
     while (!isWin && !isDraw) {
-      taketurn(currentPlayer);
+      takeTurn(currentPlayer);
       checkGameState();
       toggleTurn();
     }
@@ -127,7 +164,7 @@ const gameboard = (function () {
   ];
 
   const updateBoard = (marker, indexRow, indexCol) => {
-    board[indexRow - 1][indexCol - 1] = marker;
+    board[indexRow][indexCol] = marker;
     displayBoard();
   };
   const displayBoard = () => {
@@ -140,7 +177,7 @@ const gameboard = (function () {
     return board[row - 1][col - 1];
   };
 
-  const boardStateCheck = () => {
+  const checkGameState = () => {
     let isWinner = false;
     let isDraw = false;
 
