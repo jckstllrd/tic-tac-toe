@@ -26,12 +26,12 @@ const gameController = (function () {
       translates to a cell on the screen
     */
 
-  const initialiseBoard = () => {
-    const grid = document.querySelectorAll(".cell");
+  const initialiseBoard = (player) => {
+    const grid = document.querySelectorAll(".card");
 
     grid.forEach((cell) => {
       cell.addEventListener("click", (e) => {
-        console.log(e.target.classList);
+        takePlayerTurn(player, e.target.classList);
       });
     });
   };
@@ -43,6 +43,8 @@ const gameController = (function () {
     } else {
       computerMarker = "X";
     }
+    console.log(computerMarker);
+
     const compName = "Computer";
     const computer = createPlayer(compName, computerMarker);
     return computer;
@@ -65,18 +67,23 @@ const gameController = (function () {
       event.preventDefault();
       playerName = document.querySelector('[name="player-name"]').value;
       playerMarker = document.querySelector(
-        '[name="player-marker"]:checked'
+        'input[name="player-marker"]:checked'
       ).value;
       console.log("clicked and added player " + playerName);
 
       const player = createPlayer(playerName, playerMarker);
       const computer = initiateComputer(player.getMarker());
+      console.log(
+        "Player marker is " + player.getMarker() + "vs. " + playerMarker
+      );
+
       console.log("Created player with name " + player.name);
 
       players.push(player);
       players.push(computer);
 
       dialog.close();
+      pickTurn();
       playGame();
     });
 
@@ -90,9 +97,9 @@ const gameController = (function () {
   };
 
   const displayMarker = (marker, row, col) => {
-    let cellClass = "" + row + "-" + col;
+    let cellClass = ".cell-" + row + "-" + col;
     const cell = document.querySelector(cellClass);
-    const divMarker = document.createElement(div);
+    const divMarker = document.createElement("div");
 
     divMarker.textContent = marker;
     divMarker.style.fontSize = 32;
@@ -100,25 +107,45 @@ const gameController = (function () {
     cell.appendChild(divMarker);
   };
 
-  //   const takePlayerTurn() {
+  const takePlayerTurn = (player, cellClass) => {
+    console.log(cellClass[1]);
 
-  //   }
+    let indexRow = cellClass[1].split("-")[1];
+    let indexCol = cellClass[1].split("-")[2];
+    gameboard.updateBoard(player.getMarker(), indexRow, indexCol);
+    displayMarker(player.getMarker(), indexRow, indexCol);
+    gameboard.checkGameState();
+    toggleTurn();
+    playRound();
+  };
 
   const takeTurn = (player) => {
+    const divTurn = document.querySelector("div.turn");
+    while (divTurn.firstChild) {
+      divTurn.removeChild(divTurn.firstChild);
+    }
+    const currentTurnText = document.createElement("div");
+    currentTurnText.textContent = "Current turn: " + player.name;
+    divTurn.appendChild(currentTurnText);
+
     if (player.name == "Computer") {
       let compSelect = "";
       let selectRow;
       let selectCol;
-      while (computerSelection != "_") {
+      while (compSelect != "_") {
         selectRow = Math.floor(Math.random() * 3);
         selectCol = Math.floor(Math.random() * 3);
 
         compSelect = gameboard.checkCell(selectRow, selectCol);
       }
-      gameboard.updateBoard(computer.getMarker, selectRow, selectCol);
-      displayMarker(computer.getMarker, selectRow, selectCol);
+      console.log("marker comp is: " + player.getMarker());
+
+      gameboard.updateBoard(player.getMarker(), selectRow, selectCol);
+      displayMarker(player.getMarker(), selectRow, selectCol);
+      gameboard.checkGameState();
+      toggleTurn();
     } else {
-      return takePlayerTurn(player);
+      initialiseBoard(player);
     }
   };
 
@@ -131,24 +158,16 @@ const gameController = (function () {
   };
 
   const playRound = () => {
-    const body = document.querySelector("body");
-    const currentTurnText = document.createElement("div");
-    currentTurnText.textContent = "Current turn: " + currentPlayer.name;
-    body.appendChild(currentTurnText);
-
-    while (!isWin && !isDraw) {
+    if (!isWin && !isDraw) {
       takeTurn(currentPlayer);
-      checkGameState();
-      toggleTurn();
     }
   };
 
   const playGame = () => {
     //Asks player for Name and marker in a dialog box
-    initialiseBoard();
+    // initialiseBoard();
 
     // Choose a player randomly to take turn first
-    pickTurn();
 
     playRound();
   };
@@ -174,7 +193,7 @@ const gameboard = (function () {
   };
 
   const checkCell = (row, col) => {
-    return board[row - 1][col - 1];
+    return board[row][col];
   };
 
   const checkGameState = () => {
@@ -272,7 +291,7 @@ const gameboard = (function () {
     return [isWinner, isDraw];
   };
 
-  return { updateBoard, displayBoard, boardStateCheck, checkCell };
+  return { updateBoard, displayBoard, checkGameState, checkCell };
 })();
 
 function createPlayer(name, marker) {
