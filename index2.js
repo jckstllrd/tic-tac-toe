@@ -102,7 +102,9 @@ const gameController = (function () {
     const divMarker = document.createElement("div");
 
     divMarker.textContent = marker;
-    divMarker.style.fontSize = 32;
+    divMarker.style.fontSize = 80;
+    divMarker.style.alignItems = "center";
+    divMarker.style.justifyContent = "center";
 
     cell.appendChild(divMarker);
   };
@@ -266,7 +268,7 @@ const gameboard = (function () {
       let firstCell = board[0][0];
       let secondCell = board[1][1];
       let thirdCell = board[2][2];
-
+      console.log(firstCell, secondCell, thirdCell);
       if (firstCell == secondCell && secondCell == thirdCell) {
         isWinner = true;
       }
@@ -277,6 +279,7 @@ const gameboard = (function () {
       let firstCell = board[0][2];
       let secondCell = board[1][1];
       let thirdCell = board[2][1];
+      console.log(firstCell, secondCell, thirdCell);
 
       if (firstCell == secondCell && secondCell == thirdCell) {
         isWinner = true;
@@ -308,3 +311,6 @@ button.addEventListener("click", (e) => {
   e.preventDefault();
   gameController.openMenu();
 });
+
+// const reset = document.querySelector(".reset");
+// reset.addEventListener("click", location.reload);
