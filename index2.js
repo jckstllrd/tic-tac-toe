@@ -3,6 +3,7 @@ const gameController = (function () {
   let isDraw = false;
   let players = [];
   let currentPlayer;
+  let turnsPlayed = 0;
 
   const getWin = () => {
     return isWin;
@@ -26,12 +27,16 @@ const gameController = (function () {
       translates to a cell on the screen
     */
 
-  const initialiseBoard = (player) => {
+  const initialiseBoard = () => {
     const grid = document.querySelectorAll(".card");
 
     grid.forEach((cell) => {
       cell.addEventListener("click", (e) => {
-        takePlayerTurn(player, e.target.classList);
+        if (e.target.classList[2] == "filled") {
+          return;
+        } else {
+          takePlayerTurn(e.target.classList);
+        }
       });
     });
   };
@@ -51,6 +56,11 @@ const gameController = (function () {
   };
 
   const openMenu = () => {
+    const dialog = document.querySelector("dialog");
+    dialog.showModal();
+  };
+
+  const setupMenu = () => {
     let playerName;
     let playerMarker;
     const dialog = document.querySelector("dialog");
@@ -60,34 +70,31 @@ const gameController = (function () {
       e.preventDefault();
       dialog.close();
     });
-
     const submitBtn = document.querySelector("#submit");
 
     submitBtn.addEventListener("click", (event) => {
+      console.log("Instance of submit clicked");
+
       event.preventDefault();
       playerName = document.querySelector('[name="player-name"]').value;
       playerMarker = document.querySelector(
         'input[name="player-marker"]:checked'
       ).value;
-      console.log("clicked and added player " + playerName);
 
       const player = createPlayer(playerName, playerMarker);
-      const computer = initiateComputer(player.getMarker());
-      console.log(
-        "Player marker is " + player.getMarker() + "vs. " + playerMarker
-      );
+      console.log(player.name + " created with marker: " + player.getMarker());
 
-      console.log("Created player with name " + player.name);
+      const computer = initiateComputer(player.getMarker());
 
       players.push(player);
       players.push(computer);
 
       dialog.close();
+
       pickTurn();
+      initialiseBoard();
       playGame();
     });
-
-    dialog.showModal();
   };
 
   const pickTurn = () => {
@@ -97,27 +104,51 @@ const gameController = (function () {
   };
 
   const displayMarker = (marker, row, col) => {
+    console.log("CURRENT PLAYER IS: " + currentPlayer.name);
     let cellClass = ".cell-" + row + "-" + col;
     const cell = document.querySelector(cellClass);
-    const divMarker = document.createElement("div");
+    console.log("class is " + cellClass);
 
-    divMarker.textContent = marker;
-    divMarker.style.fontSize = 80;
-    divMarker.style.alignItems = "center";
-    divMarker.style.justifyContent = "center";
+    if (cell.classList[2] == "filled") {
+      console.log("already contains an item, try that again!");
+      takeTurn();
+    }
 
-    cell.appendChild(divMarker);
+    console.log("Trying to display " + marker);
+
+    cell.textContent = marker;
+    cell.classList.toggle("filled");
+    console.log(cell.classList[2] + " dat thang");
+    console.log(
+      currentPlayer.name + "'s child marker appended to cell: " + marker
+    );
   };
 
-  const takePlayerTurn = (player, cellClass) => {
-    console.log(cellClass[1]);
+  const takePlayerTurn = (cellClassList) => {
+    console.log(cellClassList[1]);
+    console.log(cellClassList);
 
-    let indexRow = cellClass[1].split("-")[1];
-    let indexCol = cellClass[1].split("-")[2];
-    gameboard.updateBoard(player.getMarker(), indexRow, indexCol);
-    displayMarker(player.getMarker(), indexRow, indexCol);
-    gameboard.checkGameState();
+    console.log("takePlayerTurn player: " + currentPlayer.getMarker());
+
+    let indexRow = cellClassList[1].split("-")[1];
+    let indexCol = cellClassList[1].split("-")[2];
+    let cellClass = ".cell-" + indexRow + "-" + indexCol;
+    const cell = document.querySelector(cellClass);
+    console.log("class is " + cellClass);
+
+    if (cell.classList[2] == "filled") {
+      console.log("already contains an item, try that again!");
+      takeTurn();
+    }
+
+    gameboard.updateBoard(currentPlayer.getMarker(), indexRow, indexCol);
+
+    displayMarker(currentPlayer.getMarker(), indexRow, indexCol);
+    [isWin, isDraw] = gameboard.checkGameState();
+    console.log("IN PLAYER TURN: " + gameboard.getWinningMarker());
+
     toggleTurn();
+    turnsPlayed++;
     playRound();
   };
 
@@ -126,6 +157,8 @@ const gameController = (function () {
     while (divTurn.firstChild) {
       divTurn.removeChild(divTurn.firstChild);
     }
+    console.log("Current player turn is: " + player.name);
+
     const currentTurnText = document.createElement("div");
     currentTurnText.textContent = "Current turn: " + player.name;
     divTurn.appendChild(currentTurnText);
@@ -140,14 +173,23 @@ const gameController = (function () {
 
         compSelect = gameboard.checkCell(selectRow, selectCol);
       }
-      console.log("marker comp is: " + player.getMarker());
+
+      let cellClass = ".cell-" + selectRow + "-" + selectCol;
+      const cell = document.querySelector(cellClass);
+      console.log("class is " + cell.classList[2]);
+
+      if (cell.classList[2] == "filled") {
+        takeTurn(player);
+      }
 
       gameboard.updateBoard(player.getMarker(), selectRow, selectCol);
       displayMarker(player.getMarker(), selectRow, selectCol);
-      gameboard.checkGameState();
+      [isWin, isDraw] = gameboard.checkGameState();
+
       toggleTurn();
-    } else {
-      initialiseBoard(player);
+
+      turnsPlayed++;
+      playRound();
     }
   };
 
@@ -159,9 +201,73 @@ const gameController = (function () {
     }
   };
 
+  //   const removeEventListenerAll = (
+  //     targets,
+  //     type,
+  //     listener,
+  //     options,
+  //     useCapture
+  //   ) => {
+  //     targets.forEach((target) =>
+  //       target.removeEventListener(type, listener, options, useCapture)
+  //     );
+  //   };
+
+  resetBoard = () => {
+    const cards = document.querySelectorAll(".card");
+    const turn = document.querySelector(".turn");
+    const result = document.querySelector(".result");
+    result.textContent = "";
+    turn.textContent = "";
+    cards.forEach((card) => {
+      card.textContent = "";
+      card.classList.remove("filled");
+      let cardClone = card.cloneNode(true);
+      card.parentNode.replaceChild(cardClone, card);
+      console.log("Resetting event listener");
+    });
+    // document.querySelector(".result").remove();
+    gameboard.resetGameBoard();
+
+    isWin = false;
+    isDraw = false;
+    players = [];
+    currentPlayer = "";
+    turnsPlayed = 0;
+    currentPlayer = "";
+    gameboard.displayBoard();
+    console.log(isWin, isDraw, currentPlayer, players, turnsPlayed);
+  };
+
+  const endGame = () => {
+    const containerDivs = document.querySelectorAll(".card");
+    containerDivs.forEach((cell) => {
+      if (cell.classList[2] != "filled") {
+        cell.classList.toggle("filled");
+      }
+    });
+
+    let winner;
+
+    if (players[0].getMarker() == gameboard.getWinningMarker()) {
+      winner = players[0].name;
+    } else if (players[1].getMarker() == gameboard.getWinningMarker()) {
+      winner = players[1].name;
+    }
+
+    const result = document.querySelector(".result");
+    result.textContent = "Winner is " + winner;
+    const newGame = document.createElement("button");
+    newGame.textContent = "NEW GAME";
+    newGame.addEventListener("click", resetBoard);
+    result.appendChild(newGame);
+  };
+
   const playRound = () => {
     if (!isWin && !isDraw) {
       takeTurn(currentPlayer);
+    } else {
+      endGame();
     }
   };
 
@@ -170,28 +276,51 @@ const gameController = (function () {
     // initialiseBoard();
 
     // Choose a player randomly to take turn first
-
     playRound();
   };
 
-  return { openMenu, playGame, getWin, getDraw };
+  const start = () => {
+    gameController.openMenu();
+  };
+
+  return { openMenu, setupMenu, playGame, getWin, getDraw, resetBoard, start };
 })();
 
 const gameboard = (function () {
-  const board = [
+  let board = [
     ["_", "_", "_"],
     ["_", "_", "_"],
     ["_", "_", "_"],
   ];
 
+  const resetGameBoard = () =>
+    (board = [
+      ["_", "_", "_"],
+      ["_", "_", "_"],
+      ["_", "_", "_"],
+    ]);
+
+  let winningMarker;
+
   const updateBoard = (marker, indexRow, indexCol) => {
     board[indexRow][indexCol] = marker;
     displayBoard();
+  };
+
+  const updateWinningMarker = (marker) => {
+    console.log("Setting: " + this.winningMarker + "To: " + marker);
+
+    this.winningMarker = marker;
+    console.log(this.winningMarker);
   };
   const displayBoard = () => {
     board.forEach((row) => {
       console.log(row);
     });
+  };
+
+  const getWinningMarker = () => {
+    return this.winningMarker;
   };
 
   const checkCell = (row, col) => {
@@ -201,26 +330,25 @@ const gameboard = (function () {
   const checkGameState = () => {
     let isWinner = false;
     let isDraw = false;
-
+    let winMark = "";
     let filledCount = 0;
 
     //Rows
+
     for (let x = 0; x < board.length; x++) {
       let prevCell = "";
       let matches = 1;
       let row = board[x];
+      let cell;
       for (let y = 0; y < board.length; y++) {
-        let cell = row[y];
-        console.log(cell + " vs. Previous: " + prevCell);
+        cell = row[y];
+        // console.log(cell + " vs. Previous: " + prevCell);
 
         if (cell == "_") {
-          console.log("No winner on this row");
           prevCell = cell;
           break;
         }
         if (cell == prevCell) {
-          console.log("Same cell");
-
           matches++;
         }
         prevCell = cell;
@@ -228,6 +356,7 @@ const gameboard = (function () {
       }
 
       if (matches == 3) {
+        winMark = cell;
         isWinner = true;
         break;
       }
@@ -239,24 +368,24 @@ const gameboard = (function () {
       for (let x = 0; x < board.length; x++) {
         let prevCell = "";
         let matches = 1;
+        let cell;
         for (let y = 0; y < board.length; y++) {
-          let cell = board[y][x];
-          console.log(cell + " vs. Previous: " + prevCell);
+          cell = board[y][x];
+          //   console.log(cell + " vs. Previous: " + prevCell);
 
           if (cell == "_") {
-            console.log("No winner on this row");
             prevCell = cell;
             break;
           }
           if (cell == prevCell) {
-            console.log("Same cell");
-
             matches++;
           }
           prevCell = cell;
         }
 
         if (matches == 3) {
+          winMark = cell;
+
           isWinner = true;
           break;
         }
@@ -269,7 +398,13 @@ const gameboard = (function () {
       let secondCell = board[1][1];
       let thirdCell = board[2][2];
       console.log(firstCell, secondCell, thirdCell);
-      if (firstCell == secondCell && secondCell == thirdCell) {
+      if (
+        firstCell == secondCell &&
+        secondCell == thirdCell &&
+        firstCell != "_"
+      ) {
+        winMark = thirdCell;
+
         isWinner = true;
       }
     }
@@ -278,23 +413,39 @@ const gameboard = (function () {
     if (!isWinner && !isDraw) {
       let firstCell = board[0][2];
       let secondCell = board[1][1];
-      let thirdCell = board[2][1];
+      let thirdCell = board[2][0];
       console.log(firstCell, secondCell, thirdCell);
 
-      if (firstCell == secondCell && secondCell == thirdCell) {
+      if (
+        firstCell == secondCell &&
+        secondCell == thirdCell &&
+        firstCell != "_"
+      ) {
         isWinner = true;
+
+        winMark = thirdCell;
       }
     }
 
     if (filledCount == 9 && !isWinner) {
       isDraw = true;
     }
-    console.log("Filled = " + filledCount);
+
+    updateWinningMarker(winMark);
 
     return [isWinner, isDraw];
   };
 
-  return { updateBoard, displayBoard, checkGameState, checkCell };
+  return {
+    updateBoard,
+    getWinningMarker,
+    displayBoard,
+    checkGameState,
+    checkCell,
+    winningMarker,
+    updateWinningMarker,
+    resetGameBoard,
+  };
 })();
 
 function createPlayer(name, marker) {
@@ -305,12 +456,15 @@ function createPlayer(name, marker) {
 
   return { name, getMarker, getScore, increaseScore };
 }
+const reset = document.querySelector(".reset");
+reset.addEventListener("click", gameController.resetBoard);
+
+gameController.setupMenu();
 
 const button = document.querySelector(".start-game");
 button.addEventListener("click", (e) => {
-  e.preventDefault();
-  gameController.openMenu();
-});
+  console.log("Start clicked");
 
-// const reset = document.querySelector(".reset");
-// reset.addEventListener("click", location.reload);
+  e.preventDefault();
+  gameController.start();
+});
