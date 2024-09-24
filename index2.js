@@ -246,17 +246,19 @@ const gameController = (function () {
         cell.classList.toggle("filled");
       }
     });
-
+    const result = document.querySelector(".result");
     let winner;
-
-    if (players[0].getMarker() == gameboard.getWinningMarker()) {
-      winner = players[0].name;
-    } else if (players[1].getMarker() == gameboard.getWinningMarker()) {
-      winner = players[1].name;
+    if (isWin) {
+      if (players[0].getMarker() == gameboard.getWinningMarker()) {
+        winner = players[0].name;
+      } else if (players[1].getMarker() == gameboard.getWinningMarker()) {
+        winner = players[1].name;
+      }
+      result.textContent = "Winner is " + winner;
+    } else if (isDraw) {
+      result.textContent = "It's a draw";
     }
 
-    const result = document.querySelector(".result");
-    result.textContent = "Winner is " + winner;
     const newGame = document.createElement("button");
     newGame.textContent = "NEW GAME";
     newGame.addEventListener("click", resetBoard);
@@ -464,7 +466,7 @@ gameController.setupMenu();
 const button = document.querySelector(".start-game");
 button.addEventListener("click", (e) => {
   console.log("Start clicked");
-
+  gameController.resetBoard();
   e.preventDefault();
   gameController.start();
 });
